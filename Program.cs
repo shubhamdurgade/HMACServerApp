@@ -26,11 +26,7 @@ var app = builder.Build();
 
 app.UseHttpsRedirection();
 
-// only run HMAC middleware for non-swagger requests
-app.UseWhen(
-    context => !context.Request.Path.StartsWithSegments("/swagger", StringComparison.OrdinalIgnoreCase),
-    appBuilder => appBuilder.UseMiddleware<HMACAuthenticationMiddleware>()
-);
+app.UseMiddleware<HMACAuthenticationMiddleware>();
 
 app.UseAuthorization();
 
