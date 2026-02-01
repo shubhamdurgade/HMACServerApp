@@ -28,16 +28,26 @@ namespace HMACServerApp.Models
                 return;
             }
 
+            if (context.Request.Path.StartsWithSegments("/swagger", StringComparison.OrdinalIgnoreCase) ||
+                context.Request.Path.StartsWithSegments("/swagger-ui", StringComparison.OrdinalIgnoreCase) ||
+                context.Request.Path.StartsWithSegments("/swagger/v1/swagger.json", StringComparison.OrdinalIgnoreCase))
+            {
+                await _next(context);
+                return;
+            }
+
             if (!context.Request.Headers.TryGetValue("Authorization", out var authHeader))
             {
                 context.Response.StatusCode = 401;
                 await context.Response.WriteAsync("Authorization header missing");
+                return;
             }
 
             if (!authHeader.ToString().StartsWith("HMAC ", StringComparison.OrdinalIgnoreCase))
             {
                 context.Response.StatusCode = 401;
                 await context.Response.WriteAsync("Invalid Authorization header");
+                return;
             }
 
             var tokenParts = authHeader.ToString().Substring("HMAC ".Length).Trim().Split('|');
@@ -68,6 +78,7 @@ namespace HMACServerApp.Models
             {
                 context.Response.StatusCode = 401;
                 await context.Response.WriteAsync("Invalid Timestamp");
+                return;
             }
 
             var requestTime = DateTimeOffset.FromUnixTimeSeconds(timestampSeconds).UtcDateTime;
